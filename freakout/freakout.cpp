@@ -9,7 +9,7 @@
 #include <windowsx.h> 
 #include <mmsystem.h>
 
-#include <iostream.h>       // include important C/C++ stuff
+#include <iostream>       // include important C/C++ stuff
 #include <conio.h>
 #include <stdlib.h>
 #include <malloc.h>
@@ -53,7 +53,7 @@
 // paddle defines
 #define PADDLE_START_X          (SCREEN_WIDTH/2 - 16)
 #define PADDLE_START_Y          (SCREEN_HEIGHT - 32);
-#define PADDLE_WIDTH            32
+#define PADDLE_WIDTH            64
 #define PADDLE_HEIGHT           8
 #define PADDLE_COLOR            191
 
@@ -277,15 +277,17 @@ for (int row=0; row < NUM_BLOCK_ROWS; row++)
         // draw next block (if there is one)
         if (blocks[row][col]!=0)
             {
-            // draw block     
-            Draw_Rectangle(x1-4,y1+4,
-                 x1+BLOCK_WIDTH-4,y1+BLOCK_HEIGHT+4,0);
-
+            // draw block   
+			//阴影
+            Draw_Rectangle(x1-2,y1+2,
+                 x1+BLOCK_WIDTH-2,y1+BLOCK_HEIGHT+2,0);
+			//实体
             Draw_Rectangle(x1,y1,x1+BLOCK_WIDTH,
                  y1+BLOCK_HEIGHT,blocks[row][col]);
             } // end if
 
         // advance column position
+		//实体宽度家间隙宽度
         x1+=BLOCK_X_GAP;
         } // end for col
 
@@ -310,13 +312,14 @@ void Process_Ball(void)
 // block's bounding box this is inefficient, but easy to 
 // implement, later we'll see a better way
 
-int x1 = BLOCK_ORIGIN_X, // current rendering position
+int x1 = BLOCK_ORIGIN_X, // current rendering position（当前位置）
     y1 = BLOCK_ORIGIN_Y; 
 
-int ball_cx = ball_x+(BALL_SIZE/2),  // computer center of ball
+int ball_cx = ball_x+(BALL_SIZE/2),  // 计算球的中心
     ball_cy = ball_y+(BALL_SIZE/2);
 
 // test of the ball has hit the paddle
+//ball_dy > 0（方向向下）
 if (ball_y > (SCREEN_HEIGHT/2) && ball_dy > 0)
    {
    // extract leading edge of ball
@@ -324,16 +327,19 @@ if (ball_y > (SCREEN_HEIGHT/2) && ball_dy > 0)
    int y = ball_y+(BALL_SIZE/2);
 
    // test for collision with paddle
+   //碰撞检测
    if ((x >= paddle_x && x <= paddle_x+PADDLE_WIDTH) &&
        (y >= paddle_y && y <= paddle_y+PADDLE_HEIGHT))
        {
-       // reflect ball
+       // reflect ball（反射）
        ball_dy=-ball_dy;
 
        // push ball out of paddle since it made contact
+	   //提前弹起
        ball_y+=ball_dy;
 
        // add a little english to ball based on motion of paddle
+	   //添加摩檫力？
        if (KEY_DOWN(VK_RIGHT))
           ball_dx-=(rand()%3);
        else
@@ -344,6 +350,7 @@ if (ball_y > (SCREEN_HEIGHT/2) && ball_dy > 0)
        
        // test if there are no blocks, if so send a message
        // to game loop to start another level
+	   //检测是否通关
        if (blocks_hit >= (NUM_BLOCK_ROWS*NUM_BLOCK_COLUMNS))
           {
           game_state = GAME_STATE_START_LEVEL;
@@ -361,6 +368,7 @@ if (ball_y > (SCREEN_HEIGHT/2) && ball_dy > 0)
    } // end if
 
 // now scan thru all the blocks and see of ball hit blocks
+//现在扫视所有的障碍物，看球击中障碍物
 for (int row=0; row < NUM_BLOCK_ROWS; row++)
     {    
     // reset column position
@@ -370,29 +378,36 @@ for (int row=0; row < NUM_BLOCK_ROWS; row++)
     for (int col=0; col < NUM_BLOCK_COLUMNS; col++)
         {
         // if there is a block here then test it against ball
+		//如果这里有障碍物，那么用球来测试它。
         if (blocks[row][col]!=0)
            {
-           // test ball against bounding box of block
+            // test ball against bounding box of block
+			//在讲道理这个碰撞检测不精确
            if ((ball_cx > x1) && (ball_cx < x1+BLOCK_WIDTH) &&     
                (ball_cy > y1) && (ball_cy < y1+BLOCK_HEIGHT))
                {
                // remove the block
+			   //移除障碍物
                blocks[row][col] = 0; 
 
                // increment global block counter, so we know 
                // when to start another level up
+			   //增加击中次数
                blocks_hit++;
 
                // bounce the ball
+			   //反弹
                ball_dy=-ball_dy;
 
-               // add a little english
+               // add a little 摩檫力？
                ball_dx+=(-1+rand()%3);
 
                // make a little noise
+			   //添加音效
                MessageBeep(MB_OK);
 
                // add some points
+			   //加分数
                score+=5*(level+(abs(ball_dx)));
 
                // that's it -- no more block
@@ -414,6 +429,8 @@ for (int row=0; row < NUM_BLOCK_ROWS; row++)
 } // end Process_Ball
 
 ///////////////////////////////////////////////////////////////
+
+//cdk书签
 
 int Game_Main(void *parms)
 {
@@ -547,9 +564,9 @@ if (game_state == GAME_STATE_RUN)
     Process_Ball();
 
     // draw the paddle and shadow
-    Draw_Rectangle(paddle_x-8, paddle_y+8, 
-                   paddle_x+PADDLE_WIDTH-8, 
-                   paddle_y+PADDLE_HEIGHT+8,0);
+    Draw_Rectangle(paddle_x-4, paddle_y+4, 
+                   paddle_x+PADDLE_WIDTH-4, 
+                   paddle_y+PADDLE_HEIGHT+4,0);
 
     Draw_Rectangle(paddle_x, paddle_y, 
                    paddle_x+PADDLE_WIDTH, 

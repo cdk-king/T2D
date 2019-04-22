@@ -1,5 +1,8 @@
 // BLACKBOX.H - Header file for demo game engine library
 
+//和在工程设置里写上链入wpcap.lib的效果一样（两种方式等价，或说一个隐式一个显式调用）
+#pragma comment(lib,"ddraw.lib")
+
 // watch for multiple inclusions
 #ifndef BLACKBOX
 #define BLACKBOX
@@ -9,7 +12,11 @@
 // default screen size
 #define SCREEN_WIDTH    640  // size of screen
 #define SCREEN_HEIGHT   480
-#define SCREEN_BPP      8    // bits per pixel
+//现在的电脑显示模式的色深好像只能设置为32位真色彩，所以设置成8位色深，编译不会报错，但是运行不了
+//文件中编译可以运行八位但是巨卡
+//这里内存行间距也要改变，即除与4（不懂>>运算符的自行百度）,因为色深为32了
+//（4字节）; RGB这个宏可以自己看一下定义，它就是用来处理32位色深的
+#define SCREEN_BPP     32    // bits per pixel
 #define MAX_COLORS      256  // maximum colors
 
 // MACROS /////////////////////////////////////////////////////

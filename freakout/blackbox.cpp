@@ -9,7 +9,7 @@
 #include <windowsx.h> 
 #include <mmsystem.h>
 
-#include <iostream.h>        // include important C/C++ stuff
+#include <iostream>        // include important C/C++ stuff
 #include <conio.h>
 #include <stdlib.h>
 #include <malloc.h>
