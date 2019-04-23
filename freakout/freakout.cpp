@@ -80,6 +80,9 @@ int ball_dx  = 0, ball_dy  = 0; // velocity of ball
 int score    = 0;               // the score
 int level    = 1;               // the current level
 int blocks_hit = 0;             // tracks number of blocks hit
+char info[80];
+int lastTime = 0;
+int fps = 0;
 
 // this contains the game grid data   
 
@@ -347,6 +350,17 @@ if (ball_y > (SCREEN_HEIGHT/2) && ball_dy > 0)
           ball_dx+=(rand()%3);
        else
           ball_dx+=(-1+rand()%3);
+	   
+	   // draw the info
+	   //sprintf(info, "(x-paddle_x) %d", (x - paddle_x));
+	   
+
+	   if ((x-paddle_x)>PADDLE_WIDTH/2) {
+		   ball_dx += (rand() % 3 * ((x - paddle_x- (PADDLE_WIDTH / 2)) / (PADDLE_WIDTH / 2)));
+	   }
+	   else {
+		   ball_dx -= (rand() % 3 * (((PADDLE_WIDTH / 2)-(x - paddle_x)) / (PADDLE_WIDTH / 2)));
+	   }
        
        // test if there are no blocks, if so send a message
        // to game loop to start another level
@@ -598,13 +612,27 @@ if (game_state == GAME_STATE_RUN)
 
     // draw the info
     sprintf(buffer,"F R E A K O U T           分数 %d             等级 %d",score,level);
+	
     Draw_Text_GDI(buffer, 8,SCREEN_HEIGHT-16, 127);
-    
-    // flip the surfaces
-    DD_Flip();
 
     // sync to 33ish fps
     Wait_Clock(30);
+
+	if (lastTime != 0) {
+		if (Get_Clock()-lastTime > 1000) {
+			fps = Get_Clock() - start_clock_count;
+			lastTime = Get_Clock();
+		}
+	}
+	else {
+		lastTime = Get_Clock();
+	}
+
+	sprintf(info, "fps %d  ", fps);
+	Draw_Text_GDI(info, 8, SCREEN_HEIGHT - 32, 127);
+
+	// flip the surfaces
+	DD_Flip();
 
     // check of user is trying to exit
     if (KEY_DOWN(VK_ESCAPE))
