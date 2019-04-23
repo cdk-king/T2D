@@ -118,7 +118,7 @@ for (index=0; index < 256; index++)
     {
     // set each entry
     if (index < 64) 
-        palette[index].peRed = index*4; 
+        palette[index].peRed = index*4;
     else           // shades of green
     if (index >= 64 && index < 128) 
         palette[index].peGreen = (index-64)*4;
@@ -276,6 +276,7 @@ int DD_Flip(void)
 while(lpddsprimary->Flip(NULL, DDFLIP_WAIT)!=DD_OK);
 
 // flip the surface
+//·­×ª±íÃæ£¿
 
 // return success
 return(1);

@@ -444,6 +444,7 @@ char buffer[80]; // used to print text
 if (game_state == GAME_STATE_INIT)
     {
     // initialize everything here graphics
+	//初始化此处的所有内容图形
     DD_Init(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_BPP);
 
     // seed the random number generator
@@ -454,13 +455,14 @@ if (game_state == GAME_STATE_INIT)
     paddle_x = PADDLE_START_X;
     paddle_y = PADDLE_START_Y;
 
-    // set ball position and velocity
+    // 初始化球的位置和速度
     ball_x = 8+rand()%(SCREEN_WIDTH-16);
     ball_y = BALL_START_Y;
     ball_dx = -4 + rand()%(8+1);
     ball_dy = 6 + rand()%2;
 
     // transition to start level state
+	//进入开始游戏关卡阶段
     game_state = GAME_STATE_START_LEVEL;
 
     } // end if 
@@ -471,9 +473,11 @@ if (game_state == GAME_STATE_START_LEVEL)
     // get a new level ready to run
 
     // initialize the blocks
+	// 初始化障碍物
     Init_Blocks();
 
     // reset block counter
+	// 重新设置击打数量
     blocks_hit = 0;
 
     // transition to run state
@@ -485,18 +489,22 @@ else
 if (game_state == GAME_STATE_RUN)
     {
     // start the timing clock
+	// 开始游戏时间
     Start_Clock();
 
     // clear drawing surface for the next frame of animation
+	// 清空画面
     Draw_Rectangle(0,0,SCREEN_WIDTH-1, SCREEN_HEIGHT-1,200);
 
     // move the paddle
     if (KEY_DOWN(VK_RIGHT))
        {
        // move paddle to right
+	   //右移
        paddle_x+=8;
  
        // make sure paddle doesn't go off screen
+	   //边缘检测
        if (paddle_x > (SCREEN_WIDTH-PADDLE_WIDTH))
           paddle_x = SCREEN_WIDTH-PADDLE_WIDTH;
 
@@ -505,23 +513,28 @@ if (game_state == GAME_STATE_RUN)
     if (KEY_DOWN(VK_LEFT))
        {
        // move paddle to right
+		//左移
        paddle_x-=8;
  
        // make sure paddle doesn't go off screen
+	   //边缘检测
        if (paddle_x < 0)
           paddle_x = 0;
 
        } // end if
 
     // draw blocks
+	// 绘制障碍物
     Draw_Blocks();
 
     // move the ball
+	//移动球
     ball_x+=ball_dx;
     ball_y+=ball_dy;
 
     // keep ball on screen, if the ball hits the edge of 
     // screen then bounce it by reflecting its velocity
+	//边缘检测
     if (ball_x > (SCREEN_WIDTH - BALL_SIZE) || ball_x < 0) 
        {
        // reflect x-axis velocity
@@ -551,35 +564,40 @@ if (game_state == GAME_STATE_RUN)
        ball_y+=ball_dy;
 
        // minus the score
-       score-=100;
+	   //扣分
+       score-=50;
 
        } // end if
 
     // next watch out for ball velocity getting out of hand
+	//限制速度
     if (ball_dx > 8) ball_dx = 8;
     else
     if (ball_dx < -8) ball_dx = -8;    
 
     // test if ball hit any blocks or the paddle
+	//碰撞检测
     Process_Ball();
 
     // draw the paddle and shadow
+	//绘制平面阴影
     Draw_Rectangle(paddle_x-4, paddle_y+4, 
                    paddle_x+PADDLE_WIDTH-4, 
                    paddle_y+PADDLE_HEIGHT+4,0);
-
+	//绘制平面
     Draw_Rectangle(paddle_x, paddle_y, 
                    paddle_x+PADDLE_WIDTH, 
                    paddle_y+PADDLE_HEIGHT,PADDLE_COLOR);
 
-    // draw the ball
+    // 绘制球体阴影
     Draw_Rectangle(ball_x-4, ball_y+4, ball_x+BALL_SIZE-4, 
                    ball_y+BALL_SIZE+4, 0);
+	// 绘制球体
     Draw_Rectangle(ball_x, ball_y, ball_x+BALL_SIZE, 
                    ball_y+BALL_SIZE, 255);
 
     // draw the info
-    sprintf(buffer,"F R E A K O U T           Score %d             Level %d",score,level);
+    sprintf(buffer,"F R E A K O U T           分数 %d             等级 %d",score,level);
     Draw_Text_GDI(buffer, 8,SCREEN_HEIGHT-16, 127);
     
     // flip the surfaces
