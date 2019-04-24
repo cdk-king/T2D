@@ -73,8 +73,10 @@ if (DirectDrawCreateEx(NULL, (void **)&lpdd, IID_IDirectDraw7, NULL)!=DD_OK)
    return(0);
 
 // set cooperation level to windowed mode normal
-if (lpdd->SetCooperativeLevel(main_window_handle,
-           DDSCL_ALLOWMODEX | DDSCL_FULLSCREEN | 
+//
+if (lpdd->SetCooperativeLevel(main_window_handle, DDSCL_NORMAL |
+           DDSCL_ALLOWMODEX | 
+		   DDSCL_FULLSCREEN | 
            DDSCL_EXCLUSIVE | DDSCL_ALLOWREBOOT)!=DD_OK)
     return(0);
 

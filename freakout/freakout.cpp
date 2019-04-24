@@ -170,11 +170,13 @@ if (!RegisterClass(&winclass))
 
 // create the window, note the use of WS_POPUP
 if (!(hwnd = CreateWindow(WINDOW_CLASS_NAME,    // class
-             "WIN3D Game Console",	// title
-			 WS_POPUP | WS_VISIBLE,
+             "freakout",	// title
+	(WS_OVERLAPPED | WS_SYSMENU | WS_CAPTION),
+			 //WS_POPUP | WS_VISIBLE,
 			 0,0,	                // initial x,y
-   		     GetSystemMetrics(SM_CXSCREEN),  // intial width
-             GetSystemMetrics(SM_CYSCREEN),  // initial height
+   		     //GetSystemMetrics(SM_CXSCREEN),  // intial width
+             //GetSystemMetrics(SM_CYSCREEN),  // initial height
+			 640,480,
 			 NULL,	    // handle to parent 
 			 NULL,	    // handle to menu
 			 hinstance,// instance
@@ -182,6 +184,7 @@ if (!(hwnd = CreateWindow(WINDOW_CLASS_NAME,    // class
 return(0);
 
 // hide mouse
+//Òþ²ØÊó±ê
 ShowCursor(FALSE);
 
 // save the window handle and instance in a global
