@@ -13,7 +13,7 @@ int ncmdshow
 	//call message box api with NULL for parent window handle
 	MessageBox(NULL,"CDK_KING!!!","MY FIRST WINDOWS PROGRAM",MB_OK | MB_ICONEXCLAMATION);
 	//ICON EXCLAMATIONÍ¼±ê¸ÐÌ¾ºÅ
-
+	//MessageBeep(MB_OK);
 	return (0);
 }	//end WinMain
 
