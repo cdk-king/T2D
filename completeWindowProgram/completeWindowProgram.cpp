@@ -93,9 +93,23 @@ int ncmdshow
 		return(0);
 	}
 
-	while (GetMessage(&msg,NULL,0,0)) {
+	//非实时循环
+	/*while (GetMessage(&msg,NULL,0,0)) {
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
+	}*/
+
+	//实时事件循环
+	while (TRUE){
+		if (PeekMessage(&msg,NULL,0,0,PM_REMOVE)) {
+			if (msg.message == WM_QUIT) {
+				break;
+			}
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+
+		//Game_Main();
 	}
 
 	return (msg.wParam);
