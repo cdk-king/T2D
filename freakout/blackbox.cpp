@@ -1,5 +1,8 @@
 // BLACKBOX.CPP - Game Engine 
  
+//和在工程设置里写上链入wpcap.lib的效果一样（两种方式等价，或说一个隐式一个显式调用）
+#pragma comment(lib,"ddraw.lib"
+
 // INCLUDES ///////////////////////////////////////////////////
 
 #define WIN32_LEAN_AND_MEAN  // make sure all macros are included

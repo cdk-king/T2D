@@ -171,12 +171,12 @@ if (!RegisterClass(&winclass))
 // create the window, note the use of WS_POPUP
 if (!(hwnd = CreateWindow(WINDOW_CLASS_NAME,    // class
              "freakout",	// title
-	(WS_OVERLAPPED | WS_SYSMENU | WS_CAPTION),
-			 //WS_POPUP | WS_VISIBLE,
+	//(WS_OVERLAPPED | WS_SYSMENU | WS_CAPTION),
+			 WS_POPUP | WS_VISIBLE,
 			 0,0,	                // initial x,y
-   		     //GetSystemMetrics(SM_CXSCREEN),  // intial width
-             //GetSystemMetrics(SM_CYSCREEN),  // initial height
-			 640,480,
+   		     GetSystemMetrics(SM_CXSCREEN),  // intial width
+             GetSystemMetrics(SM_CYSCREEN),  // initial height
+			 //640,480,
 			 NULL,	    // handle to parent 
 			 NULL,	    // handle to menu
 			 hinstance,// instance
