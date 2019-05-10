@@ -1,3 +1,4 @@
+
 #define MENU_FILE_ID_OPEN		1000;
 #define MENU_FILE_ID_CLOSE		1001;
 #define MENU_FILE_ID_SAVE		1002;
