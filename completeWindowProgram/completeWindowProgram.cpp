@@ -14,6 +14,9 @@
 #define KEYDOWN(vk_code) ((GetAsyncKeyState(vk_code) & 0x8000) ? 1 : 0)
 #define KEYUP(vk_code)   ((GetAsyncKeyState(vk_code) & 0x8000) ? 0 : 1)
 
+#define WINDOW_WIDTH  400
+#define WINDOW_HEIGHT 400
+
 //globals
 HWND      main_window_handle = NULL; // globally track main window
 HINSTANCE hinstance_app = NULL; // globally track hinstance
@@ -64,9 +67,10 @@ LPSTR lpcmdline,
 int ncmdshow
 ) 
 {
-	WNDCLASSEX winclass;
-	HWND hwnd;
-	MSG msg;
+	WNDCLASSEX winclass; // this will hold the class we create
+	HWND	   hwnd;	 // generic window handle
+	MSG		   msg;		 // generic message
+	HDC        hdc;      // graphics device context
 
 	winclass.cbSize = sizeof(WNDCLASSEX);
 	winclass.style = CS_DBLCLKS | CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
