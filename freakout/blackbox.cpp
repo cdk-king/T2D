@@ -1,7 +1,7 @@
 // BLACKBOX.CPP - Game Engine 
  
 //和在工程设置里写上链入wpcap.lib的效果一样（两种方式等价，或说一个隐式一个显式调用）
-#pragma comment(lib,"ddraw.lib"
+#pragma comment(lib,"ddraw.lib")
 
 // INCLUDES ///////////////////////////////////////////////////
 
@@ -53,6 +53,7 @@ DDSCAPS2              ddscaps;               // a direct draw surface capabiliti
 HRESULT               ddrval;                // result back from dd calls
 DWORD                 start_clock_count = 0; // used for timing
 
+
 // these defined the general clipping rectangle
 int min_clip_x = 0,                          // clipping rectangle 
     max_clip_x = SCREEN_WIDTH-1,
@@ -77,10 +78,12 @@ if (DirectDrawCreateEx(NULL, (void **)&lpdd, IID_IDirectDraw7, NULL)!=DD_OK)
 
 // set cooperation level to windowed mode normal
 //
-if (lpdd->SetCooperativeLevel(main_window_handle, DDSCL_NORMAL |
-           DDSCL_ALLOWMODEX | 
-		   DDSCL_FULLSCREEN | 
-           DDSCL_EXCLUSIVE | DDSCL_ALLOWREBOOT)!=DD_OK)
+if (lpdd->SetCooperativeLevel(main_window_handle, 
+	//DDSCL_NORMAL |
+	        DDSCL_ALLOWMODEX | 
+			DDSCL_FULLSCREEN | 
+			DDSCL_EXCLUSIVE | DDSCL_ALLOWREBOOT
+)!=DD_OK)
     return(0);
 
 // set the display mode
@@ -140,7 +143,7 @@ for (index=0; index < 256; index++)
     } // end for index
 
 // now create the palette object
-if (lpdd->CreatePalette(DDPCAPS_8BIT | DDPCAPS_INITIALIZE | DDPCAPS_ALLOW256,
+if (lpdd->CreatePalette( DDPCAPS_INITIALIZE | DDPCAPS_ALLOW256,
                          palette,&lpddpal,NULL)!=DD_OK)
    return(0);
 
@@ -347,37 +350,7 @@ return(1);
 
 ///////////////////////////////////////////////////////////////   
 
-int Draw_Rectangle(int x1, int y1, int x2, int y2, int color,
-                   LPDIRECTDRAWSURFACE7 lpdds)
-{
-// this function uses directdraw to draw a filled rectangle
 
-DDBLTFX ddbltfx; // this contains the DDBLTFX structure
-RECT fill_area;  // this contains the destination rectangle
-
-// clear out the structure and set the size field 
-DD_INIT_STRUCT(ddbltfx);
-
-// set the dwfillcolor field to the desired color
-ddbltfx.dwFillColor = color; 
-
-// fill in the destination rectangle data (your data)
-fill_area.top    = y1;
-fill_area.left   = x1;
-fill_area.bottom = y2+1;
-fill_area.right  = x2+1;
-
-// ready to blt to surface, in this case blt to primary
-lpdds->Blt(&fill_area, // ptr to dest rectangle
-           NULL,       // ptr to source surface, NA            
-           NULL,       // ptr to source rectangle, NA
-           DDBLT_COLORFILL | DDBLT_WAIT | DDBLT_ASYNC,   // fill and wait                   
-           &ddbltfx);  // ptr to DDBLTFX structure
-
-// return success
-return(1);
-
-} // end Draw_Rectangle
 
 ///////////////////////////////////////////////////////////////
 

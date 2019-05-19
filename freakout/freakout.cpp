@@ -83,6 +83,53 @@ int blocks_hit = 0;             // tracks number of blocks hit
 char info[80];
 int lastTime = 0;
 int fps = 0;
+HDC			hdc;
+HWND	   hwnd;
+
+int Draw_Rectangle(int x1, int y1, int x2, int y2, int color,
+	LPDIRECTDRAWSURFACE7 lpdds)
+{
+	// this function uses directdraw to draw a filled rectangle
+	DDBLTFX ddbltfx; // this contains the DDBLTFX structure
+	RECT fill_area;  // this contains the destination rectangle
+
+	// clear out the structure and set the size field 
+	DD_INIT_STRUCT(ddbltfx);
+
+	// set the dwfillcolor field to the desired color
+	ddbltfx.dwFillColor = color;
+
+	// fill in the destination rectangle data (your data)
+	fill_area.top = y1;
+	fill_area.left = x1;
+	fill_area.bottom = y2 + 1;
+	fill_area.right = x2 + 1;
+
+	// ready to blt to surface, in this case blt to primary
+	lpdds->Blt(&fill_area, // ptr to dest rectangle
+	           NULL,       // ptr to source surface, NA            
+	           NULL,       // ptr to source rectangle, NA
+	           DDBLT_COLORFILL | DDBLT_WAIT | DDBLT_ASYNC,   // fill and wait                   
+	           &ddbltfx);  // ptr to DDBLTFX structure
+	
+	//HBRUSH hbrush = CreateSolidBrush(RGB(color, 0, 0));
+
+	// draw either a filled rect or a wireframe rect
+	//FillRect(hdc, &fill_area, CreateSolidBrush(RGB(color, 0, 0)));
+
+	/*HPEN pen = CreatePen(PS_SOLID,1,color);
+	HBRUSH hbrush = CreateSolidBrush(color);
+	SelectObject(hdc,pen);
+	SelectObject(hdc,hbrush);
+	Rectangle(hdc, x1,y1,x2+1,y2+1);
+
+	DeleteObject(pen);
+	DeleteObject(hbrush);*/
+
+	// return success
+	return(1);
+
+} // end Draw_Rectangle
 
 // this contains the game grid data   
 
@@ -97,7 +144,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd,
 {
 // this is the main message handler of the system
 PAINTSTRUCT	ps;		   // used in WM_PAINT
-HDC			hdc;	   // handle to a device context
+//HDC			hdc;	   // handle to a device context
 
 // what is the message 
 switch(msg)
@@ -148,7 +195,7 @@ int WINAPI WinMain(	HINSTANCE hinstance,
 WNDCLASS winclass;	// this will hold the class we create
 HWND	 hwnd;		// generic window handle
 MSG		 msg;		// generic message
-HDC      hdc;       // generic dc
+//HDC      hdc;       // generic dc
 PAINTSTRUCT ps;     // generic paintstruct
 
 // first fill in the window class stucture
@@ -194,6 +241,8 @@ main_instance      = hinstance;
 // perform all game console specific initialization
 Game_Init();
 
+hdc = GetDC(hwnd);
+
 // enter main event loop
 while(1)
 	{
@@ -209,12 +258,13 @@ while(1)
 		// send the message to the window proc
 		DispatchMessage(&msg);
 		} // end if
-    
+
     // main game processing goes here
     Game_Main();
 
 	} // end while
 
+ReleaseDC(hwnd, hdc);
 // shutdown game and release all resources
 Game_Shutdown();
 
@@ -451,6 +501,7 @@ for (int row=0; row < NUM_BLOCK_ROWS; row++)
 
 int Game_Main(void *parms)
 {
+	
 // this is the workhorse of your game it will be called
 // continuously in real-time this is like main() in C
 // all the calls for you game go here!
@@ -618,8 +669,6 @@ if (game_state == GAME_STATE_RUN)
 	
     Draw_Text_GDI(buffer, 8,SCREEN_HEIGHT-16, 127);
 
-    // sync to 33ish fps
-    Wait_Clock(30);
 
 	if (lastTime != 0) {
 		if (Get_Clock()-lastTime > 1000) {
@@ -647,6 +696,14 @@ if (game_state == GAME_STATE_RUN)
        game_state = GAME_STATE_SHUTDOWN;
 
        } // end if
+
+		// sync to 33ish fps
+		Wait_Clock(30);
+
+		//Sleep(300);
+
+		//InvalidateRect(hwnd, NULL, TRUE);
+	
 
     } // end if
 ///////////////////////////////////////////////////////////////
