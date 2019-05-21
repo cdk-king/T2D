@@ -61,10 +61,10 @@ HINSTANCE hinstance_app = NULL; // globally track hinstance
 // directdraw stuff
 
 LPDIRECTDRAW7         lpdd = NULL;   // dd object
-LPDIRECTDRAWSURFACE7  lpddsprimary = NULL;   // dd primary surface
-LPDIRECTDRAWSURFACE7  lpddsback = NULL;   // dd back surface
-LPDIRECTDRAWPALETTE   lpddpal = NULL;   // a pointer to the created dd palette
-LPDIRECTDRAWCLIPPER   lpddclipper = NULL;   // dd clipper
+LPDIRECTDRAWSURFACE7  lpddsprimary = NULL;   // dd primary surface主面
+LPDIRECTDRAWSURFACE7  lpddsback = NULL;   // dd back surface幅面
+LPDIRECTDRAWPALETTE   lpddpal = NULL;   // a pointer to the created dd palette调色板
+LPDIRECTDRAWCLIPPER   lpddclipper = NULL;   // dd clipper剪切
 PALETTEENTRY          palette[256];          // color palette
 PALETTEENTRY          save_palette[256];     // used to save palettes
 DDSURFACEDESC2        ddsd;                  // a direct draw surface description struct
@@ -153,6 +153,7 @@ int Game_Main(void *parms = NULL, int num_parms = 0)
 
 	// plot 1000 random pixels to the primary surface and return
 	// clear ddsd and set size, never assume it's clean
+	//内存空间初始化
 	memset(&ddsd, 0, sizeof(ddsd));
 	ddsd.dwSize = sizeof(ddsd);
 
@@ -233,7 +234,7 @@ int Game_Init(void *parms = NULL, int num_parms = 0)
 	// enable valid fields
 	ddsd.dwFlags = DDSD_CAPS;
 
-	// request primary surface
+	// request primary surface主显示表面
 	ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
 
 	// create the primary surface
