@@ -177,12 +177,15 @@ int Game_Main(void *parms = NULL, int num_parms = 0)
 	for (int index = 0; index < 1000; index++)
 	{
 		// select random position and color for 640x480x8
-		UCHAR color = rand() % 256;
+		UCHAR color = rand() % 255;
 		int x = rand() % 640;
 		int y = rand() % 480;
 
 		// plot the pixel
-		video_buffer[x + y * mempitch] = color;
+		video_buffer[x*4 + y * mempitch] = color;
+		video_buffer[x*4 + y * mempitch + 1] = color;
+		video_buffer[x*4 + y * mempitch + 2] = color;
+		video_buffer[x*4 + y * mempitch + 3] = 128;
 
 	} // end for index
 
@@ -267,7 +270,7 @@ int Game_Init(void *parms = NULL, int num_parms = 0)
 	palette[255].peBlue = 255;
 	palette[255].peFlags = PC_NOCOLLAPSE;
 
-	// create the palette object
+	// create the palette object创建调色板
 	if (FAILED(lpdd->CreatePalette(DDPCAPS_8BIT | DDPCAPS_ALLOW256 |
 		DDPCAPS_INITIALIZE,
 		palette, &lpddpal, NULL)))
@@ -276,7 +279,7 @@ int Game_Init(void *parms = NULL, int num_parms = 0)
 		return(0);
 	} // end if
 
-	// finally attach the palette to the primary surface
+	// finally attach the palette to the primary surface主面设置调色板
 	if (FAILED(lpddsprimary->SetPalette(lpddpal)))
 	{
 		// error
