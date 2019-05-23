@@ -177,14 +177,16 @@ int Game_Main(void *parms = NULL, int num_parms = 0)
 	for (int index = 0; index < 1000; index++)
 	{
 		// select random position and color for 640x480x8
-		UCHAR color = rand() % 255;
+		UCHAR color1 = rand() % 255;
+		UCHAR color2 = rand() % 255;
+		UCHAR color3 = rand() % 255;
 		int x = rand() % 640;
 		int y = rand() % 480;
 
 		// plot the pixel
-		video_buffer[x*4 + y * mempitch] = color;
-		video_buffer[x*4 + y * mempitch + 1] = color;
-		video_buffer[x*4 + y * mempitch + 2] = color;
+		video_buffer[x*4 + y * mempitch] = color1;
+		video_buffer[x*4 + y * mempitch + 1] = color2;
+		video_buffer[x*4 + y * mempitch + 2] = color3;
 		video_buffer[x*4 + y * mempitch + 3] = 128;
 
 	} // end for index
