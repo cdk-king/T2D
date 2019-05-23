@@ -86,7 +86,7 @@ int fps = 0;
 HDC			hdc;
 HWND	   hwnd;
 
-int Draw_Rectangle(int x1, int y1, int x2, int y2, int color,
+int Draw_Rectangle(int x1, int y1, int x2, int y2, int r,int g,int b,
 	LPDIRECTDRAWSURFACE7 lpdds)
 {
 	// this function uses directdraw to draw a filled rectangle
@@ -97,7 +97,7 @@ int Draw_Rectangle(int x1, int y1, int x2, int y2, int color,
 	DD_INIT_STRUCT(ddbltfx);
 
 	// set the dwfillcolor field to the desired color
-	ddbltfx.dwFillColor = color;
+	ddbltfx.dwFillColor = RGB(r,g, b);
 
 	// fill in the destination rectangle data (your data)
 	fill_area.top = y1;
@@ -133,7 +133,7 @@ int Draw_Rectangle(int x1, int y1, int x2, int y2, int color,
 
 // this contains the game grid data   
 
-UCHAR blocks[NUM_BLOCK_ROWS][NUM_BLOCK_COLUMNS];     
+UCHAR blocks[NUM_BLOCK_ROWS][NUM_BLOCK_COLUMNS][4];     
 
 // FUNCTIONS //////////////////////////////////////////////////
 
@@ -307,9 +307,15 @@ return(1);
 void Init_Blocks(void)
 {
 // initialize the block field
-for (int row=0; row < NUM_BLOCK_ROWS; row++)
-    for (int col=0; col < NUM_BLOCK_COLUMNS; col++)
-         blocks[row][col] = row*16+col*3+16;
+	for (int row = 0; row < NUM_BLOCK_ROWS; row++) {
+		for (int col = 0; col < NUM_BLOCK_COLUMNS; col++)
+		{
+			blocks[row][col][0] = row * 8 + col * 8+50;
+			blocks[row][col][1] = row * 8 + col * 8+50;
+			blocks[row][col][2] = 0;
+			blocks[row][col][3] = 128;
+		}
+	}
 
 } // end Init_Blocks
 
@@ -331,15 +337,15 @@ for (int row=0; row < NUM_BLOCK_ROWS; row++)
     for (int col=0; col < NUM_BLOCK_COLUMNS; col++)
         {
         // draw next block (if there is one)
-        if (blocks[row][col]!=0)
+        if (blocks[row][col][3]!=0)
             {
             // draw block   
 			//阴影
             Draw_Rectangle(x1-2,y1+2,
-                 x1+BLOCK_WIDTH-2,y1+BLOCK_HEIGHT+2,0);
+                 x1+BLOCK_WIDTH-2,y1+BLOCK_HEIGHT+2,0,0,0);
 			//实体
             Draw_Rectangle(x1,y1,x1+BLOCK_WIDTH,
-                 y1+BLOCK_HEIGHT,blocks[row][col]);
+                 y1+BLOCK_HEIGHT,blocks[row][col][0], blocks[row][col][1], blocks[row][col][2]);
             } // end if
 
         // advance column position
@@ -446,7 +452,7 @@ for (int row=0; row < NUM_BLOCK_ROWS; row++)
         {
         // if there is a block here then test it against ball
 		//如果这里有障碍物，那么用球来测试它。
-        if (blocks[row][col]!=0)
+        if (blocks[row][col][3]!=0)
            {
             // test ball against bounding box of block
 			//在讲道理这个碰撞检测不精确
@@ -455,7 +461,8 @@ for (int row=0; row < NUM_BLOCK_ROWS; row++)
                {
                // remove the block
 			   //移除障碍物
-               blocks[row][col] = 0; 
+               blocks[row][col][3] = 0;
+			   
 
                // increment global block counter, so we know 
                // when to start another level up
@@ -562,7 +569,7 @@ if (game_state == GAME_STATE_RUN)
 
     // clear drawing surface for the next frame of animation
 	// 清空画面
-    Draw_Rectangle(0,0,SCREEN_WIDTH-1, SCREEN_HEIGHT-1,200);
+    Draw_Rectangle(0,0,SCREEN_WIDTH-1, SCREEN_HEIGHT-1,100,100,100);
 
     // move the paddle
     if (KEY_DOWN(VK_RIGHT))
@@ -651,24 +658,26 @@ if (game_state == GAME_STATE_RUN)
 	//绘制平面阴影
     Draw_Rectangle(paddle_x-4, paddle_y+4, 
                    paddle_x+PADDLE_WIDTH-4, 
-                   paddle_y+PADDLE_HEIGHT+4,0);
+                   paddle_y+PADDLE_HEIGHT+4,0,0,0);
 	//绘制平面
     Draw_Rectangle(paddle_x, paddle_y, 
                    paddle_x+PADDLE_WIDTH, 
-                   paddle_y+PADDLE_HEIGHT,PADDLE_COLOR);
+                   paddle_y+PADDLE_HEIGHT,255,0,0);
 
     // 绘制球体阴影
     Draw_Rectangle(ball_x-4, ball_y+4, ball_x+BALL_SIZE-4, 
-                   ball_y+BALL_SIZE+4, 0);
+                   ball_y+BALL_SIZE+4, 0,0,0);
 	// 绘制球体
     Draw_Rectangle(ball_x, ball_y, ball_x+BALL_SIZE, 
-                   ball_y+BALL_SIZE, 255);
+                   ball_y+BALL_SIZE, 255,255,255);
 
     // draw the info
     sprintf(buffer,"F R E A K O U T           分数 %d             等级 %d",score,level);
 	
     Draw_Text_GDI(buffer, 8,SCREEN_HEIGHT-16, 127);
 
+	// sync to 33ish fps
+	Wait_Clock(30);
 
 	if (lastTime != 0) {
 		if (Get_Clock()-lastTime > 1000) {
@@ -697,8 +706,7 @@ if (game_state == GAME_STATE_RUN)
 
        } // end if
 
-		// sync to 33ish fps
-		Wait_Clock(30);
+		
 
 		//Sleep(300);
 

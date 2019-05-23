@@ -77,7 +77,7 @@ DWORD Get_Clock(void);
 DWORD Wait_Clock(DWORD count);
 
 // graphics functions
-int Draw_Rectangle(int x1, int y1, int x2, int y2, int color,LPDIRECTDRAWSURFACE7 lpdds=lpddsback);
+int Draw_Rectangle(int x1, int y1, int x2, int y2, int r, int g, int b, LPDIRECTDRAWSURFACE7 lpdds=lpddsback);
 
 // gdi functions
 int Draw_Text_GDI(char *text, int x,int y,COLORREF color, LPDIRECTDRAWSURFACE7 lpdds=lpddsback);
