@@ -295,10 +295,31 @@ int Game_Shutdown(void *parms)
 {
 // this function is where you shutdown your game and
 // release all resources that you allocated
+	
+	// first the palette
+	//先清除最后创建的，最后在清除最先创建的lpdd
+	if (lpddpal)
+	{
+		lpddpal->Release();
+		lpddpal = NULL;
+	} // end if
 
+ // now the primary surface
+	if (lpddsprimary)
+	{
+		lpddsprimary->Release();
+		lpddsprimary = NULL;
+	} // end if
 
-// return success
-return(1);
+ // now blow away the IDirectDraw4 interface
+	if (lpdd)
+	{
+		lpdd->Release();
+		lpdd = NULL;
+	} // end if
+
+ // return success or failure or your own return code here
+	return(1);
 
 } // end Game_Shutdown
 
