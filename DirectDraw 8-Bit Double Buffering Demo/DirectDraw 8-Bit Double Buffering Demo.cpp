@@ -42,6 +42,7 @@
 typedef unsigned short USHORT;
 typedef unsigned short WORD;
 typedef unsigned char  UCHAR;
+typedef unsigned int  UINT;
 typedef unsigned char  BYTE;
 
 // MACROS /////////////////////////////////////////////////
@@ -49,6 +50,8 @@ typedef unsigned char  BYTE;
 #define KEYDOWN(vk_code) ((GetAsyncKeyState(vk_code) & 0x8000) ? 1 : 0)
 #define KEYUP(vk_code)   ((GetAsyncKeyState(vk_code) & 0x8000) ? 0 : 1)
 
+// this builds a 32 bit color value in A.8.8.8 format (8-bit alpha mode)
+#define _RGB32BIT(a,r,g,b) ((b) + ((g) << 8) + ((r) << 16) + ((a) << 24))
 
 // initializes a direct draw struct
 #define DDRAW_INIT_STRUCT(ddstruct) { memset(&ddstruct,0,sizeof(ddstruct)); ddstruct.dwSize=sizeof(ddstruct); }
@@ -98,7 +101,10 @@ LRESULT CALLBACK WindowProc(HWND hwnd,
 		// return success
 		return(0);
 	} break;
-
+	case WM_MOUSEMOVE:
+	{
+		
+	} break;
 	case WM_PAINT:
 	{
 		// simply validate the window 
@@ -151,18 +157,22 @@ int Game_Main(void *parms = NULL, int num_parms = 0)
 	} // end if
 
  // erase double buffer
-	memset((void *)double_buffer, 0, SCREEN_WIDTH*SCREEN_HEIGHT);
+	memset((void *)double_buffer, 0, SCREEN_WIDTH*SCREEN_HEIGHT*sizeof(int));
 
 	// you would perform game logic...
 
 	// draw the next frame into the double buffer
 	// plot 5000 random pixels
-	for (int index = 0; index < 5000; index++)
+	for (int index = 0; index < 1000; index++)
 	{
 		int   x = rand() % SCREEN_WIDTH;
 		int   y = rand() % SCREEN_HEIGHT;
-		UINT col = rand() % 256;
-		double_buffer[x + y * SCREEN_WIDTH] = col;
+		UINT col = rand() % 255;
+		int r = rand() % 255;
+		int g = rand() % 255;
+		int b = rand() % 255;
+		UINT pixel = _RGB32BIT(128, r, g, b);
+		double_buffer[x + y * SCREEN_WIDTH] = pixel;
 	} // end for index
 
 // copy the double buffer into the primary buffer
@@ -174,15 +184,20 @@ int Game_Main(void *parms = NULL, int num_parms = 0)
 	// get video pointer to primary surfce
 	primary_buffer = (UINT *)ddsd.lpSurface;
 
+	int len = 0;
+
 	// test if memory is linear
-	if (ddsd.lPitch == SCREEN_WIDTH)
+	if (ddsd.lPitch == (SCREEN_WIDTH*4))
 	{
+
 		// copy memory from double buffer to primary buffer
-		memcpy((void *)primary_buffer, (void *)double_buffer, SCREEN_WIDTH*SCREEN_HEIGHT);
+		//memcpy¿½±´×Ö½Ú
+		memcpy((void *)primary_buffer, (void *)double_buffer, SCREEN_WIDTH*SCREEN_HEIGHT* sizeof(int));
+		len = sizeof(primary_buffer);
 	} // end if
 	else
 	{ // non-linear
-
+		//memcpy((void *)primary_buffer, (void *)double_buffer, SCREEN_WIDTH*SCREEN_HEIGHT);
 	// make copy of source and destination addresses
 		UINT *dest_ptr = primary_buffer;
 		UINT *src_ptr = double_buffer;
@@ -209,8 +224,34 @@ int Game_Main(void *parms = NULL, int num_parms = 0)
 	if (FAILED(lpddsprimary->Unlock(NULL)))
 		return(0);
 
+	HDC xdc; // the working dc
+
+// get the dc from surface
+	lpddsprimary->GetDC(&xdc);
+	//if (lpddsprimary->GetDC(&hdc) != DD_OK)
+		//return(0);
+
+	// get a graphics context
+	//HDC hdc = GetDC(main_window_handle);
+
+	// set the foreground color to green
+	SetTextColor(xdc, RGB(0, 255, 0));
+
+	// set the transparency mode to OPAQUE
+	SetBkMode(xdc, TRANSPARENT);
+
+	// print the ascii code and key state
+	//sprintf(buffer, "lPitch = %d      ", ddsd.lPitch);
+	//int len = sizeof(double_buffer) / sizeof(double_buffer[1]);
+	sprintf(buffer, "len = %ld      ", len);
+	
+	TextOut(xdc, 20, 450, buffer, strlen(buffer));
+	lpddsprimary->ReleaseDC(xdc);
+
+	
 	// wait a sec
 	Sleep(500);
+
 
 	// return success or failure or your own return code here
 	return(1);
@@ -282,8 +323,8 @@ int Game_Init(void *parms = NULL, int num_parms = 0)
 		return(0);
 
 	// finally attach the palette to the primary surface
-	if (FAILED(lpddsprimary->SetPalette(lpddpal)))
-		return(0);
+	//if (FAILED(lpddsprimary->SetPalette(lpddpal)))
+		//return(0);
 
 	// allocate double buffer
 	if ((double_buffer = new UINT[SCREEN_WIDTH * SCREEN_HEIGHT]) == NULL)
