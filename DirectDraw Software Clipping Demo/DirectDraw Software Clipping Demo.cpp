@@ -42,6 +42,7 @@
 typedef unsigned short USHORT;
 typedef unsigned short WORD;
 typedef unsigned char  UCHAR;
+typedef unsigned int  UINT;
 typedef unsigned char  BYTE;
 
 // the happy face structure
@@ -56,6 +57,10 @@ typedef struct HAPPY_FACE_TYP
 #define KEYDOWN(vk_code) ((GetAsyncKeyState(vk_code) & 0x8000) ? 1 : 0)
 #define KEYUP(vk_code)   ((GetAsyncKeyState(vk_code) & 0x8000) ? 0 : 1)
 
+// this builds a 32 bit color value in A.8.8.8 format (8-bit alpha mode)
+#define _RGB32BIT(a,r,g,b) ((b) + ((g) << 8) + ((r) << 16) + ((a) << 24))
+
+
 // initializes a direct draw struct
 #define DDRAW_INIT_STRUCT(ddstruct) { memset(&ddstruct,0,sizeof(ddstruct)); ddstruct.dwSize=sizeof(ddstruct); }
 
@@ -63,8 +68,8 @@ typedef struct HAPPY_FACE_TYP
 
 void Blit_Clipped(int x, int y,
 	int width, int height,
-	UCHAR *bitmap,
-	UCHAR *video_buffer, int mempitch);
+	UINT *bitmap,
+	UINT *video_buffer, int mempitch);
 
 // GLOBALS ////////////////////////////////////////////////
 
@@ -89,7 +94,7 @@ DWORD                 start_clock_count = 0; // used for timing
 char buffer[80];                             // general printing buffer
 
 // a low tech bitmap that uses palette entry 1 for the color :)
-UCHAR happy_bitmap[64] = { 0,0,0,0,0,0,0,0,
+UINT happy_bitmap[64] = { 0,0,0,0,0,0,0,0,
 						  0,0,1,1,1,1,0,0,
 						  0,1,0,1,1,0,1,0,
 						  0,1,1,1,1,1,1,0,
@@ -98,7 +103,7 @@ UCHAR happy_bitmap[64] = { 0,0,0,0,0,0,0,0,
 						  0,0,1,1,1,1,0,0,
 						  0,0,0,0,0,0,0,0 };
 
-UCHAR sad_bitmap[64] = { 0,0,0,0,0,0,0,0,
+UINT sad_bitmap[64] = { 0,0,0,0,0,0,0,0,
 						0,0,1,1,1,1,0,0,
 						0,1,0,1,1,0,1,0,
 						0,1,1,1,1,1,1,0,
@@ -190,7 +195,8 @@ int Game_Main(void *parms = NULL, int num_parms = 0)
 	DDRAW_INIT_STRUCT(ddbltfx);
 
 	// now set the color word info to the color we desire
-	ddbltfx.dwFillColor = 0;
+	//_RGB32BIT(128, 255, 0, 0);
+	ddbltfx.dwFillColor = _RGB32BIT(128, 255, 255, 255);;
 
 	// make the blitter call
 	if (FAILED(lpddsback->Blt(NULL, // pointer to dest RECT, NULL for whole thing
@@ -227,15 +233,15 @@ int Game_Main(void *parms = NULL, int num_parms = 0)
 				happy_faces[face].y,
 				8, 8,
 				happy_bitmap,
-				(UCHAR *)ddsd.lpSurface,
-				ddsd.lPitch/4);
+				(UINT *)ddsd.lpSurface,
+				(ddsd.lPitch>>2));
 		else // we must be sad :(
 			Blit_Clipped(happy_faces[face].x,
 				happy_faces[face].y,
 				8, 8,
 				sad_bitmap,
-				(UCHAR *)ddsd.lpSurface,
-				ddsd.lPitch/4);
+				(UINT *)ddsd.lpSurface,
+				(ddsd.lPitch>>2));
 
 	} // end face
 
@@ -359,10 +365,13 @@ int Game_Init(void *parms = NULL, int num_parms = 0)
 		return(0);
 
 	// finally attach the palette to the primary surface
-	if (FAILED(lpddsprimary->SetPalette(lpddpal)))
-		return(0);
+	lpddsprimary->SetPalette(lpddpal);
+	//if (FAILED(lpddsprimary->SetPalette(lpddpal))) 
+		//return(0);
 
 	// initialize all the happy faces
+	//初始化随机数发生器
+	srand(GetTickCount());
 	for (int face = 0; face < 100; face++)
 	{
 		// set random position
@@ -370,8 +379,15 @@ int Game_Init(void *parms = NULL, int num_parms = 0)
 		happy_faces[face].y = rand() % SCREEN_HEIGHT;
 
 		// set random velocity (-2,+2)
-		happy_faces[face].xv = -2 + rand() % 5;
-		happy_faces[face].yv = -2 + rand() % 5;
+		//要取得 [a,b) 的随机整数，使用 (rand() % (b-a))+ a;
+		//要取得[a, b] 的随机整数，使用(rand() % (b - a + 1)) + a;
+		//要取得(a, b] 的随机整数，使用(rand() % (b - a)) + a + 1;
+		happy_faces[face].xv = -2+(rand() % 5);
+		happy_faces[face].yv = -2+(rand() % 5);
+		if (happy_faces[face].xv==0 && happy_faces[face].yv==0) {
+			happy_faces[face].xv = 1;
+			happy_faces[face].yv = 1;
+		}
 
 	} // end for face
 
@@ -386,7 +402,6 @@ int Game_Shutdown(void *parms = NULL, int num_parms = 0)
 {
 	// this is called after the game is exited and the main event
 	// loop while is exited, do all you cleanup and shutdown here
-
 
 	// now the back buffer surface
 	if (lpddpal)
@@ -497,6 +512,8 @@ int WINAPI WinMain(HINSTANCE hinstance,
 
 	} // end while
 
+	memset(happy_faces, 0, sizeof(happy_faces));
+
 // closedown game here
 	Game_Shutdown();
 
@@ -509,8 +526,8 @@ int WINAPI WinMain(HINSTANCE hinstance,
 
 void Blit_Clipped(int x, int y,          // position to draw bitmap
 	int width, int height, // size of bitmap in pixels
-	UCHAR *bitmap,         // pointer to bitmap data
-	UCHAR *video_buffer,   // pointer to video buffer surface
+	UINT *bitmap,         // pointer to bitmap data
+	UINT *video_buffer,   // pointer to video buffer surface
 	int   mempitch)        // video pitch per line
 {
 	// this function blits and clips the image sent in bitmap to the 
@@ -554,17 +571,17 @@ void Blit_Clipped(int x, int y,          // position to draw bitmap
 	int dy = y2 - y1 + 1;
 
 	// compute starting address in video_buffer 
-	video_buffer += (x1 + y1 * mempitch);
+	video_buffer += (x1 + (y1 * mempitch));
 
 	// compute starting address in bitmap to scan data from
-	bitmap += (x_off + y_off * width);
+	bitmap += (x_off + (y_off * width));
 
 	// at this point bitmap is pointing to the first pixel in the bitmap that needs to
 	// be blitted, and video_buffer is pointing to the memory location on the destination
 	// buffer to put it, so now enter rasterizer loop
 
-	UCHAR pixel; // used to read/write pixels
-
+	UINT pixel; // used to read/write pixels
+	int rgb;
 	for (int index_y = 0; index_y < dy; index_y++)
 	{
 		// inner loop, where the action takes place
@@ -572,7 +589,10 @@ void Blit_Clipped(int x, int y,          // position to draw bitmap
 		{
 			// read pixel from source bitmap, test for transparency and plot
 			if ((pixel = bitmap[index_x]))
-				video_buffer[index_x] = pixel;
+			{
+				rgb = _RGB32BIT(128, 255, 0, 0);
+				video_buffer[index_x] = rgb;
+			}
 
 		} // end for index_x
 
