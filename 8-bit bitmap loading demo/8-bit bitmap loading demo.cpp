@@ -59,7 +59,7 @@ typedef struct BITMAP_FILE_TAG
 
 // PROTOTYPES  //////////////////////////////////////////////
 
-int Flip_Bitmap(UCHAR *image, int bytes_per_line, int height);
+int Flip_Bitmap(UINT *image, int bytes_per_line, int height);
 
 int Load_Bitmap_File(BITMAP_FILE_PTR bitmap, char *filename);
 
@@ -118,6 +118,16 @@ int Load_Bitmap_File(BITMAP_FILE_PTR bitmap, char *filename)
 		return(0);
 
 	// now load the bitmap file header
+	//现在加载位图文件头
+	/*WINBASEAPI
+	UINT
+		WINAPI
+		_lread(
+			_In_ HFILE hFile,
+			_Out_writes_bytes_to_(uBytes, return) LPVOID lpBuffer,
+			_In_ UINT uBytes
+		);*/
+
 	_lread(file_handle, &bitmap->bitmapfileheader, sizeof(BITMAPFILEHEADER));
 
 	// test if this is a bitmap file
@@ -143,6 +153,7 @@ int Load_Bitmap_File(BITMAP_FILE_PTR bitmap, char *filename)
 		_lread(file_handle, &bitmap->palette, MAX_COLORS_PALETTE * sizeof(PALETTEENTRY));
 
 		// now set all the flags in the palette correctly and fix the reversed 
+		//现在正确设置调色板中的所有标志并修复反转的
 		// BGR RGBQUAD data format
 		for (index = 0; index < MAX_COLORS_PALETTE; index++)
 		{
@@ -152,12 +163,14 @@ int Load_Bitmap_File(BITMAP_FILE_PTR bitmap, char *filename)
 			bitmap->palette[index].peBlue = temp_color;
 
 			// always set the flags word to this
+			//总是将标志字设置为
 			bitmap->palette[index].peFlags = PC_NOCOLLAPSE;
 		} // end for index
 
 	} // end if
 
 // finally the image data itself
+	//重新定位文件的读/写位置
 	_lseek(file_handle, -(int)(bitmap->bitmapinfoheader.biSizeImage), SEEK_END);
 
 	// now read in the image, if the image is 8 or 16 bit then simply read it
