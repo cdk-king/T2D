@@ -110,10 +110,10 @@ int Load_Bitmap_File(BITMAP_FILE_PTR bitmap, char *filename)
 	int file_handle,  // the file handle
 		index;        // looping index
 
-	UCHAR   *temp_buffer = NULL; // used to convert 24 bit images to 16 bit
+	UCHAR   *temp_buffer = NULL; // used to convert 24 bit images to 16 bit-用于将24位图像转换为16位图像？
 	OFSTRUCT file_data;          // the file data information
 
-	// open the file if it exists
+	// 打开文件（如果存在）
 	if ((file_handle = OpenFile(filename, &file_data, OF_READ)) == -1)
 		return(0);
 
@@ -176,15 +176,20 @@ int Load_Bitmap_File(BITMAP_FILE_PTR bitmap, char *filename)
 	// now read in the image, if the image is 8 or 16 bit then simply read it
 	// but if its 24 bit then read it into a temporary area and then convert
 	// it to a 16 bit image
+	//现在读取图像，如果图像是8或16位，那么只需读取它
+	//但如果是24位，则将其读取到临时区域，然后转换
+	//转换为16位图像
 
 	if (bitmap->bitmapinfoheader.biBitCount == 8 || bitmap->bitmapinfoheader.biBitCount == 16 ||
 		bitmap->bitmapinfoheader.biBitCount == 24)
 	{
+		//删除最后一个图像（如果有）上一个
 		// delete the last image if there was one
 		if (bitmap->buffer)
 			free(bitmap->buffer);
 
 		// allocate the memory for the image
+		//为图像分配内存
 		if (!(bitmap->buffer = (UINT *)malloc(bitmap->bitmapinfoheader.biSizeImage)))
 		{
 			// close the file
@@ -205,7 +210,9 @@ int Load_Bitmap_File(BITMAP_FILE_PTR bitmap, char *filename)
 
 	} // end else
 
-#if 0
+//如果给定条件为真，则编译下面代码
+//#if 0
+#if 1
 // write the file info out 
 	printf("\nfilename:%s \nsize=%d \nwidth=%d \nheight=%d \nbitsperpixel=%d \ncolors=%d \nimpcolors=%d",
 		filename,
@@ -221,6 +228,7 @@ int Load_Bitmap_File(BITMAP_FILE_PTR bitmap, char *filename)
 	_lclose(file_handle);
 
 	// flip the bitmap
+	//大多数的bmp文件是上下颠倒的，需要翻转
 	Flip_Bitmap(bitmap->buffer,
 		bitmap->bitmapinfoheader.biWidth*(bitmap->bitmapinfoheader.biBitCount / 8),
 		bitmap->bitmapinfoheader.biHeight);
@@ -447,13 +455,23 @@ int Game_Init(void *parms = NULL, int num_parms = 0)
 	DDRAW_INIT_STRUCT(ddsd);
 
 	// enable valid fields
-	ddsd.dwFlags = DDSD_CAPS;
+	ddsd.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
 
-	// request primary surface
-	ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
+	// set the backbuffer count field to 1, use 2 for triple buffering
+	ddsd.dwBackBufferCount = 1;
+
+	// request a complex, flippable
+	ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP;
 
 	// create the primary surface
 	if (FAILED(lpdd->CreateSurface(&ddsd, &lpddsprimary, NULL)))
+		return(0);
+
+	// this line is needed by the call
+	ddsd.ddsCaps.dwCaps = DDSCAPS_BACKBUFFER;
+
+	// get the attached back buffer surface
+	if (FAILED(lpddsprimary->GetAttachedSurface(&ddsd.ddsCaps, &lpddsback)))
 		return(0);
 
 	// build up the palette data array
@@ -488,6 +506,22 @@ int Game_Init(void *parms = NULL, int num_parms = 0)
 	// finally attach the palette to the primary surface
 	if (FAILED(lpddsprimary->SetPalette(lpddpal)))
 		return(0);
+
+
+
+
+	// draw a color gradient in back buffer
+	DDRAW_INIT_STRUCT(ddsd);
+
+	// lock the back buffer
+	if (FAILED(lpddsback->Lock(NULL, &ddsd, DDLOCK_SURFACEMEMORYPTR | DDLOCK_WAIT, NULL)))
+		return(0);
+
+
+	// unlock the back buffer
+	if (FAILED(lpddsback->Unlock(NULL)))
+		return(0);
+
 
 	// load the 8-bit image
 	if (!Load_Bitmap_File(&bitmap, "bitmap8.bmp"))
