@@ -53,13 +53,13 @@ typedef struct BITMAP_FILE_TAG
 	BITMAPFILEHEADER bitmapfileheader;  // this contains the bitmapfile header
 	BITMAPINFOHEADER bitmapinfoheader;  // this is all the info including the palette
 	PALETTEENTRY     palette[256];      // we will store the palette here
-	UINT            *buffer;           // this is a pointer to the data
+	UCHAR           *buffer;           // this is a pointer to the data
 
 } BITMAP_FILE, *BITMAP_FILE_PTR;
 
 // PROTOTYPES  //////////////////////////////////////////////
 
-int Flip_Bitmap(UINT *image, int bytes_per_line, int height);
+int Flip_Bitmap(UCHAR *image, int bytes_per_line, int height);
 
 int Load_Bitmap_File(BITMAP_FILE_PTR bitmap, char *filename);
 
@@ -75,6 +75,16 @@ int DDraw_Fill_Surface(LPDIRECTDRAWSURFACE7 lpdds, int color);
 
 // initializes a direct draw struct
 #define DDRAW_INIT_STRUCT(ddstruct) { memset(&ddstruct,0,sizeof(ddstruct)); ddstruct.dwSize=sizeof(ddstruct); }
+
+// this builds a 16 bit color value in 5.5.5 format (1-bit alpha mode)
+#define _RGB16BIT555(r,g,b) ((b & 31) + ((g & 31) << 5) + ((r & 31) << 10))
+
+// this builds a 16 bit color value in 5.6.5 format (green dominate mode)
+#define _RGB16BIT565(r,g,b) ((b & 31) + ((g & 63) << 5) + ((r & 31) << 11))
+
+// this builds a 32 bit color value in A.8.8.8 format (8-bit alpha mode)
+#define _RGB32BIT(a,r,g,b) ((b) + ((g) << 8) + ((r) << 16) + ((a) << 24))
+
 
 // GLOBALS ////////////////////////////////////////////////
 
@@ -171,7 +181,7 @@ int Load_Bitmap_File(BITMAP_FILE_PTR bitmap, char *filename)
 
 // finally the image data itself
 	//重新定位文件的读/写位置
-	_lseek(file_handle, -(int)(bitmap->bitmapinfoheader.biSizeImage), SEEK_END);
+	//_lseek(file_handle, -(int)(bitmap->bitmapinfoheader.biSizeImage), SEEK_END);
 
 	// now read in the image, if the image is 8 or 16 bit then simply read it
 	// but if its 24 bit then read it into a temporary area and then convert
@@ -180,17 +190,17 @@ int Load_Bitmap_File(BITMAP_FILE_PTR bitmap, char *filename)
 	//但如果是24位，则将其读取到临时区域，然后转换
 	//转换为16位图像
 
-	if (bitmap->bitmapinfoheader.biBitCount == 8 || bitmap->bitmapinfoheader.biBitCount == 16 ||
-		bitmap->bitmapinfoheader.biBitCount == 24)
+	//|| bitmap->bitmapinfoheader.biBitCount == 16 || bitmap->bitmapinfoheader.biBitCount == 24 
+	if (bitmap->bitmapinfoheader.biBitCount == 8 || bitmap->bitmapinfoheader.biBitCount == 16 || bitmap->bitmapinfoheader.biBitCount == 24)
 	{
 		//删除最后一个图像（如果有）上一个
 		// delete the last image if there was one
-		if (bitmap->buffer)
-			free(bitmap->buffer);
+		//if (bitmap->buffer)
+			//free(bitmap->buffer);
 
 		// allocate the memory for the image
 		//为图像分配内存
-		if (!(bitmap->buffer = (UINT *)malloc(bitmap->bitmapinfoheader.biSizeImage)))
+		if (!(bitmap->buffer = (UCHAR *)malloc(bitmap->bitmapinfoheader.biSizeImage)))
 		{
 			// close the file
 			_lclose(file_handle);
@@ -206,7 +216,7 @@ int Load_Bitmap_File(BITMAP_FILE_PTR bitmap, char *filename)
 	else
 	{
 		// serious problem
-		return(0);
+		//return(0);
 
 	} // end else
 
@@ -260,15 +270,15 @@ int Unload_Bitmap_File(BITMAP_FILE_PTR bitmap)
 
 ///////////////////////////////////////////////////////////
 
-int Flip_Bitmap(UINT *image, int bytes_per_line, int height)
+int Flip_Bitmap(UCHAR *image, int bytes_per_line, int height)
 {
 	// this function is used to flip bottom-up .BMP images
 
-	UINT *buffer; // used to perform the image processing
+	UCHAR *buffer; // used to perform the image processing
 	int index;     // looping index
 
 	// allocate the temporary buffer
-	if (!(buffer = (UINT *)malloc(bytes_per_line*height)))
+	if (!(buffer = (UCHAR *)malloc(bytes_per_line*height)))
 		return(0);
 
 	// copy image to work area
@@ -382,27 +392,88 @@ int Game_Main(void *parms = NULL, int num_parms = 0)
 		window_closed = 1;
 	} // end if
 
+	RECT source_rect, // used to hold the destination RECT
+		dest_rect;  // used to hold the destination RECT
+
+ // get a random rectangle for source
+	int x1 = rand() % SCREEN_WIDTH;
+	int y1 = rand() % SCREEN_HEIGHT;
+	int x2 = rand() % SCREEN_WIDTH;
+	int y2 = rand() % SCREEN_HEIGHT;
+
+	// get a random rectangle for destination
+	int x3 = rand() % SCREEN_WIDTH;
+	int y3 = rand() % SCREEN_HEIGHT;
+	int x4 = rand() % SCREEN_WIDTH;
+	int y4 = rand() % SCREEN_HEIGHT;
+
+	// now set up the RECT structure to fill the region from
+	// (x1,y1) to (x2,y2) on the source surface
+	source_rect.left = x1;
+	source_rect.top = y1;
+	source_rect.right = x2;
+	source_rect.bottom = y2;
+
+	// now set up the RECT structure to fill the region from
+	// (x3,y3) to (x4,y4) on the destination surface
+	dest_rect.left = x3;
+	dest_rect.top = y3;
+	dest_rect.right = x4;
+	dest_rect.bottom = y4;
+
+	// make the blitter call
+	if (FAILED(lpddsprimary->Blt(NULL,  // pointer to dest RECT &dest_rect
+		lpddsback,   // pointer to source surface
+		NULL,// pointer to source RECT &source_rect
+		DDBLT_WAIT,  // control flags
+		NULL)))      // pointer to DDBLTFX holding info
+		return(0);
+
+	//Sleep(30);
+
  // copy the bitmap image to the primary buffer line by line
  // note this is a good candidate operation to make into a function - hint!
 
  // lock the primary surface
-	lpddsprimary->Lock(NULL, &ddsd, DDLOCK_SURFACEMEMORYPTR | DDLOCK_WAIT, NULL);
+	lpddsback->Lock(NULL, &ddsd, DDLOCK_SURFACEMEMORYPTR | DDLOCK_WAIT, NULL);
 
 	// get video pointer to primary surfce
-	UINT *primary_buffer = (UINT *)ddsd.lpSurface;
+	UINT  *primary_buffer = (UINT *)ddsd.lpSurface;
 
 	// test if memory is linear
 	if (ddsd.lPitch == SCREEN_WIDTH*4)
 	{
 		// copy memory from double buffer to primary buffer
-		memcpy((void *)primary_buffer, (void *)bitmap.buffer, SCREEN_WIDTH*SCREEN_HEIGHT*4);
+		//memcpy((void *)primary_buffer, (void *)bitmap.buffer, SCREEN_WIDTH*SCREEN_HEIGHT);
+
+		// process each line and copy it into the primary buffer
+		for (int index_y = 0; index_y < SCREEN_HEIGHT; index_y++)
+		{
+			for (int index_x = 0; index_x < SCREEN_WIDTH; index_x++)
+			{
+				// get BGR values
+				UCHAR blue = (bitmap.buffer[index_y*SCREEN_WIDTH * 3 + index_x * 3 + 0]),
+					green = (bitmap.buffer[index_y*SCREEN_WIDTH * 3 + index_x * 3 + 1]),
+					red = (bitmap.buffer[index_y*SCREEN_WIDTH * 3 + index_x * 3 + 2]);
+
+				// this builds a 32 bit color value in A.8.8.8 format (8-bit alpha mode)
+				int pixel = _RGB32BIT(128, red, green, blue);
+
+				// write the pixel
+				primary_buffer[index_x + (index_y*(ddsd.lPitch >> 2))] = pixel;
+
+			} // end for index_x
+			
+		} // end for index_y
+
+
 	} // end if
 	else
 	{ // non-linear
 
 	// make copy of source and destination addresses
-		UINT *dest_ptr = primary_buffer;
-		UINT *src_ptr = bitmap.buffer;
+		UINT  *dest_ptr = primary_buffer;
+		UCHAR *src_ptr = bitmap.buffer;
 
 		// memory is non-linear, copy line by line
 		for (int y = 0; y < SCREEN_HEIGHT; y++)
@@ -418,11 +489,13 @@ int Game_Main(void *parms = NULL, int num_parms = 0)
 	} // end else
 
  // now unlock the primary surface
-	if (FAILED(lpddsprimary->Unlock(NULL)))
+	if (FAILED(lpddsback->Unlock(NULL)))
 		return(0);
 
 
 	// do nothing -- look at pretty picture
+
+	Sleep(30);
 
 	// return success or failure or your own return code here
 	return(1);
@@ -504,8 +577,8 @@ int Game_Init(void *parms = NULL, int num_parms = 0)
 		return(0);
 
 	// finally attach the palette to the primary surface
-	if (FAILED(lpddsprimary->SetPalette(lpddpal)))
-		return(0);
+	//if (FAILED(lpddsprimary->SetPalette(lpddpal)))
+		//return(0);
 
 
 
@@ -517,6 +590,19 @@ int Game_Init(void *parms = NULL, int num_parms = 0)
 	if (FAILED(lpddsback->Lock(NULL, &ddsd, DDLOCK_SURFACEMEMORYPTR | DDLOCK_WAIT, NULL)))
 		return(0);
 
+	// get alias to start of surface memory for fast addressing
+	UINT *video_buffer = (UINT *)ddsd.lpSurface;
+
+	// draw the gradient
+	for (int index_y = 0; index_y < SCREEN_HEIGHT; index_y++)
+	{
+		// fill next line with color
+		memset((void *)video_buffer, index_y * 255 / SCREEN_HEIGHT , SCREEN_WIDTH * 4);
+
+		// advance pointer
+		video_buffer += ddsd.lPitch/4;
+
+	} // end for index_y
 
 	// unlock the back buffer
 	if (FAILED(lpddsback->Unlock(NULL)))
@@ -524,12 +610,12 @@ int Game_Init(void *parms = NULL, int num_parms = 0)
 
 
 	// load the 8-bit image
-	if (!Load_Bitmap_File(&bitmap, "bitmap8.bmp"))
+	if (!Load_Bitmap_File(&bitmap, "bitmap24.bmp"))
 		return(0);
 
 	// load it's palette into directdraw
-	if (FAILED(lpddpal->SetEntries(0, 0, MAX_COLORS_PALETTE, bitmap.palette)))
-		return(0);
+	//if (FAILED(lpddpal->SetEntries(0, 0, MAX_COLORS_PALETTE, bitmap.palette)))
+		//return(0);
 
 	// clean the surface
 	DDraw_Fill_Surface(lpddsprimary, 0);
